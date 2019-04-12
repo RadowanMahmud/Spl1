@@ -113,16 +113,45 @@ int main(int argc,char *argv[])
 				char *buffer=(char *)malloc(filesize);
 				//filedesc=open(Filename, O_CREAT | O_EXCL | O_WRONLY ,0666);
 				FILE *getfile;
-				getfile=fopen(Filename,"wb");
-				recv(sockfd,buffer,filesize,0);
+				getfile=fopen(Filename,"ab+");
 
+				
+				////////////////////////////
+				 int loop=filesize/100;
+                         int remainfile=filesize%100;
+int i=0;
+        char chunk[100];
+        for(int j=0;j<loop;j++)
+        {
+           	recv(sockfd,chunk,100,0);
+            int k=0;
+            while (i < filesize && k<100)
+            {
+            buffer[i]=chunk[k];
+            i++;
+            k++;
+
+           }
+        }
+        if(remainfile>0)
+        {
+                     	recv(sockfd,chunk,remainfile,0);
+            int k=0;
+            while (i < filesize && k<remainfile)
+            {
+            buffer[i]=chunk[k];
+           i++;
+           k++;
+
+            }
+        }
 				/////////////////////////////
-				int i=0;
-				while (i < filesize)
+				int s=0;
+				while (s < filesize)
 				{
-				     printf("%02X ",(buffer[i]));
-				     i++;
-				     if( ! (i % 16) ) printf( "\n" );
+				     printf("%02X ",(buffer[s]));
+				     s++;
+				     if( ! (s % 16) ) printf( "\n" );
 				 }
 				fwrite(buffer,1,filesize,getfile);
 				//close(filedesc);

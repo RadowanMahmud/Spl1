@@ -22,6 +22,7 @@
 
 void sendfiledata(int sockfd,char *filename)
 {
+       	                                          memset( filename, '\0', sizeof( filename ));
         FILE *file;
         /*unsigned*/ char *buffer;
         unsigned long fileLen;
@@ -39,6 +40,9 @@ void sendfiledata(int sockfd,char *filename)
         fileLen=ftell(file);
         fseek(file, 0, SEEK_SET);
 
+        long int loop=fileLen/100;
+        long int remainfile=fileLen%100;
+       
         //Allocate memory
         buffer=(char *)malloc(fileLen);
         if (!buffer)
@@ -47,26 +51,53 @@ void sendfiledata(int sockfd,char *filename)
                                 fclose(file);
               //  return 1;
         }
+        
 
        fread(buffer,fileLen,sizeof(char),file);
        fclose(file);
 
-       int i=0;
+    
+         send(sockfd, &fileLen, sizeof(int), 0);
+        int i=0;
+        char chunk[100];
+        for(int j=0;j<loop;j++)
+        {
+            int k=0;
+            while (i < fileLen && k<100)
+            {
+            chunk[k]=buffer[i];
+            i++;
+            k++;
+           }
+                      		  send(sockfd, chunk,100,0);
+        }
+        if(remainfile>0)
+        {
+            int k=0;
+            while (i < fileLen && k<remainfile)
+            {
+            chunk[k]=buffer[i];
+           i++;
+           k++;
+            }
+                       		  send(sockfd, chunk,remainfile,0);
+        }
+    //   write(sockfd,buffer,fileLen);
+       
 
-     /*  while (i < fileLen){
+         while (i < fileLen){
            printf("%02X ",(buffer[i]));
            i++;
            if( ! (i % 16) ) printf( "\n" );
-       }*/
-       write(sockfd,buffer,fileLen);
+       }
        
        printf("\n\n\n%lu\n",fileLen);
-
       //  return 0;
 
 }
 bool sendfileoversocket(int sockfd,char *filename)
 {
+	                                          memset( filename, '\0', sizeof( filename ));
    struct stat ob;
    int filedesc,filesize,size;
    
@@ -74,7 +105,7 @@ bool sendfileoversocket(int sockfd,char *filename)
    filedesc=open(filename,O_RDONLY);
    filesize=ob.st_size;
   // send(sockfd,filedesc,NULL,filesize);
-  send(sockfd, &filesize, sizeof(int), 0);
+
   sendfiledata(sockfd,filename);
    
    return true;
@@ -98,7 +129,6 @@ int main(int argc,char *argv[])
      
       
       char filename[BUFSIZ];
-     
      
      struct sockaddr_in serverAddr, clientAddr;
      //socketlen_t clientLen;
@@ -149,6 +179,7 @@ int main(int argc,char *argv[])
 	      	       
 	       if(strcmp(clientrequest,"Get") == 0)   
 	       {
+	                                          memset( filename, '\0', sizeof( filename ));
 		      // strcpy(filename,getfilenamefromrequest(clientrequest));
 		       recv(newsockfd,filename,BUFSIZ,0);
 		       printf("%s\n",filename);
