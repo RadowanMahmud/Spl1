@@ -22,7 +22,6 @@
 
 void sendfiledata(int sockfd,char *filename)
 {
-       	                                          memset( filename, '\0', sizeof( filename ));
         FILE *file;
         /*unsigned*/ char *buffer;
         unsigned long fileLen;
@@ -32,7 +31,7 @@ void sendfiledata(int sockfd,char *filename)
         if (!file)
         {
                 fprintf(stderr, "Unable to open file %s", filename);
-             //   return 0;
+              //  return 0;
         }
 
         //Get file length
@@ -84,20 +83,20 @@ void sendfiledata(int sockfd,char *filename)
         }
     //   write(sockfd,buffer,fileLen);
        
-
-         while (i < fileLen){
-           printf("%02X ",(buffer[i]));
-           i++;
-           if( ! (i % 16) ) printf( "\n" );
+         int s=0;
+         while (s < fileLen){
+           printf("%02X ",(buffer[s]));
+           s++;
+           if( ! (s % 16) ) printf( "\n" );
        }
        
        printf("\n\n\n%lu\n",fileLen);
+              	                                          memset( filename, '\0', sizeof( filename ));
       //  return 0;
 
 }
 bool sendfileoversocket(int sockfd,char *filename)
 {
-	                                          memset( filename, '\0', sizeof( filename ));
    struct stat ob;
    int filedesc,filesize,size;
    
