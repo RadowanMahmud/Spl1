@@ -87,13 +87,14 @@ int main(int argc,char *argv[])
 	      if(strcmp(requestmsg,"Get") == 0)   
 	      {
 	            char Filename[256];
-		      //strcpy(requestmsg,"Get ");
-		      write(sockfd,requestmsg,strlen(requestmsg));
+		      strcpy(requestmsg,"Get ");
+		      //write(sockfd,requestmsg,strlen(requestmsg));
 		      printf("Give file name \n");
 		      scanf("%s",Filename);
+		      strcat(requestmsg,Filename);
 		      Filename[strlen(Filename)]='\0';
-		      printf("%s\n",Filename);
-		      write(sockfd,Filename,strlen(Filename));
+		      printf("%s\n",requestmsg);
+		      write(sockfd,requestmsg,strlen(requestmsg));
 		      // strcat(requestmsg,Filename);
 		      
 		      printf("%lu\n",strlen(Filename));

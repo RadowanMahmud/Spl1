@@ -13,12 +13,12 @@
 #include<sys/sendfile.h>
 
 
-/*char* getfilenamefromrequest(char *request)
+char* getfilenamefromrequest(char *request)
 {
   printf("%s\n",request);
   char *filename=strchr(request,' ');
   return filename+1;
-}*/
+}
 
 void sendfiledata(int sockfd,char *filename)
 {
@@ -165,6 +165,7 @@ int main(int argc,char *argv[])
      {
                   char serverresponse[BUFSIZ];
                   char clientrequest[BUFSIZ];
+                  char command[10];
                               memset( serverresponse, '\0', sizeof( serverresponse ));
                               memset( clientrequest, '\0', sizeof( clientrequest ));
       		  
@@ -175,12 +176,14 @@ int main(int argc,char *argv[])
 	       printf("now our client is %s\n",clientrequest);
 	       printf(" %lu\n",strlen(clientrequest));
 	       printf("at first our server is %s\n",serverresponse);
+	       
+	             sscanf(clientrequest, "%s", command);
 	      	       
-	       if(strcmp(clientrequest,"Get") == 0)   
+	       if(strcmp(command,"Get") == 0)   
 	       {
 	                                          memset( filename, '\0', sizeof( filename ));
-		      // strcpy(filename,getfilenamefromrequest(clientrequest));
-		       recv(newsockfd,filename,BUFSIZ,0);
+		       strcpy(filename,getfilenamefromrequest(clientrequest));
+		       //recv(newsockfd,filename,BUFSIZ,0);
 		       printf("%s\n",filename);
 		       printf("%d\n",access(filename,F_OK) ); 
 		       if(access(filename,F_OK) != -1)
