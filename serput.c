@@ -20,6 +20,17 @@ char* getfilenamefromrequest(char *request)
   return filename+1;
 }
 
+void recvtxtfile(int sockfd,char *Filename)
+{
+       int filedesc,filesize,size;
+       char *data;
+       recv(sockfd,&filesize,sizeof(int),0);
+	 data = malloc(filesize);
+	 filedesc=open(Filename, O_CREAT | O_EXCL | O_WRONLY ,0666);
+	 recv(sockfd,data,filesize,0);
+       write(filedesc,data,filesize);
+}
+
 void  sendtxtfile(int newsockfd,char *filename)
 {
                 struct stat object;
@@ -264,62 +275,71 @@ bool operations(int newsockfd)
 			    strcpy(putfilename,getfilenamefromrequest(clientrequest));
 				 //recv(newsockfd,filename,BUFSIZ,0);
 				 printf("%s\n",putfilename);
-				 recv(newsockfd,&filesize,sizeof(unsigned long),0);
-				 printf("size of file is %lu \n",filesize);
-			    char *buffer=(char *)malloc(filesize);
+			      char *f3=".txt";
+                        char *f4=".";
+			  	if(strstr(putfilename,f3) || !(strstr(putfilename,f4)))
+				{
+                              recvtxtfile(newsockfd,putfilename);
+			      }
+			      else
+			      {
+			             recv(newsockfd,&filesize,sizeof(unsigned long),0);
+					 printf("size of file is %lu \n",filesize);
+			    		 char *buffer=(char *)malloc(filesize);
 					//filedesc=open(Filename, O_CREAT | O_EXCL | O_WRONLY ,0666);
-			    FILE *getfile;
-			    getfile=fopen(putfilename,"ab+");
+			    		FILE *getfile;
+			    		getfile=fopen(putfilename,"ab+");
 
 					
 					////////////////////////////
 					 int loop=filesize/100;
 		                   int remainfile=filesize%100;
 		                   
-		          int i=0;
-		          char chunk[100];
-		          for(int j=0;j<loop;j++)
-		          {
-		     	             recv(newsockfd,chunk,100,0);
-		                   int k=0;
-		                   while (i < filesize && k<100)
-		                   {
-		      			buffer[i]=chunk[k];
-		      			i++;
-		      			k++;
-		                   }
-		          }
-		          
-		          if(remainfile>0)
-		          {
-		               	recv(newsockfd,chunk,remainfile,0);
-		      		int k=0;
-		      		while (i < filesize && k<remainfile)
-		      		{
-		      			buffer[i]=chunk[k];
-		     				i++;
-		     				k++;
-		     			}
-		          }
-					/////////////////////////////
-					int s=0;
-					while (s < filesize)
-					{
-					     printf("%02X ",(buffer[s]));
-					     s++;
-					     if( ! (s % 16) ) printf( "\n" );
-					 }
-					fwrite(buffer,1,filesize,getfile);
-					//close(filedesc);
-					//return 0;
-				
-				
-				      memset( putfilename, '\0', sizeof( putfilename ));
+					    int i=0;
+					    char chunk[100];
+					    for(int j=0;j<loop;j++)
+					    {
+				     	             recv(newsockfd,chunk,100,0);
+						       int k=0;
+						       while (i < filesize && k<100)
+						       {
+								buffer[i]=chunk[k];
+								i++;
+								k++;
+						       }
+					    }
+					    
+					    if(remainfile>0)
+					    {
+						   	recv(newsockfd,chunk,remainfile,0);
+							int k=0;
+							while (i < filesize && k<remainfile)
+							{
+								buffer[i]=chunk[k];
+				     				i++;
+				     				k++;
+				     			}
+					    }
+							/////////////////////////////
+							int s=0;
+							while (s < filesize)
+							{
+							     printf("%02X ",(buffer[s]));
+							     s++;
+							     if( ! (s % 16) ) printf( "\n" );
+							 }
+							fwrite(buffer,1,filesize,getfile);
+							//close(filedesc);
+							//return 0;
+                                          memset( putfilename, '\0', sizeof( putfilename ));
+						
+			      }			
+
 				           // memset( replymsg, '\0', sizeof( replymsg ));
 			                  //memset( requestmsg, '\0', sizeof( requestmsg ));
 			  
 			  printf("file has been saved");
-			   memset( serverresponse, '\0', sizeof( serverresponse ));
+			 memset( serverresponse, '\0', sizeof( serverresponse ));
                    memset( clientrequest, '\0', sizeof( clientrequest ));
 		      
 			  return false;

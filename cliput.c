@@ -15,6 +15,23 @@
 
 //#define Filename "a.jpg"
 
+
+void  sendtxtfile(int newsockfd,char *filename)
+{
+                struct stat object;
+                int filedesc,filesize,size;
+   
+                stat(filename,&object);
+                filedesc=open(filename,O_RDONLY);
+                filesize=object.st_size;
+                // send(sockfd,filedesc,NULL,filesize);
+                send(newsockfd, &filesize, sizeof(int), 0);
+                sendfile(newsockfd, filedesc, NULL, filesize);
+
+	          printf("the file has been sent\n");
+}
+
+
 void recvtxtfile(int sockfd,char *Filename)
 {
        int filedesc,filesize,size;
@@ -107,12 +124,7 @@ void putfiledata(int sockfd,char *filename)
 
 bool sendfileoversocket(int sockfd,char *filename)
 {
-   struct stat ob;
-   int filedesc,filesize,size;
-   
-   stat(filename,&ob);
-   filedesc=open(filename,O_RDONLY);
-   filesize=ob.st_size;
+  
   // send(sockfd,filedesc,NULL,filesize);
 
    putfiledata(sockfd,filename);//working line of function
@@ -360,9 +372,19 @@ int main(int argc,char *argv[])
 		      putfilename[strlen(putfilename)]='\0';
 		      printf("%s\n",requestmsg);
 		      write(sockfd,requestmsg,strlen(requestmsg));
+		            char *f3=".txt";
+                        char *f4=".";
+			  	if(strstr(putfilename,f3) || !(strstr(putfilename,f4)))
+				{
+                              sendtxtfile(sockfd,putfilename);
+			      }
+			      else
+			      {
+		                  sendfileoversocket(sockfd,putfilename);
+			      }
 	           
 	         
-		      sendfileoversocket(sockfd,putfilename);
+
 		      printf("file has been sent;");
 	        //}
 	         
@@ -469,3 +491,14 @@ return 0;
 			    printf("File stored successfully\n");
 			  }
 			  else printf("File failed to be stored to remote machine\n");*/
+			  
+			  
+			  // previou tried
+			  /*
+			   struct stat ob;
+   int filedesc,filesize,size;
+   
+   stat(filename,&ob);
+   filedesc=open(filename,O_RDONLY);
+   filesize=ob.st_size;
+			  */
