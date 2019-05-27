@@ -20,6 +20,21 @@ char* getfilenamefromrequest(char *request)
   return filename+1;
 }
 
+void  sendtxtfile(int newsockfd,char *filename)
+{
+                struct stat object;
+                int filedesc,filesize,size;
+   
+                stat(filename,&object);
+                filedesc=open(filename,O_RDONLY);
+                filesize=object.st_size;
+                // send(sockfd,filedesc,NULL,filesize);
+                send(newsockfd, &filesize, sizeof(int), 0);
+                sendfile(newsockfd, filedesc, NULL, filesize);
+
+	          printf("the file has been sent\n");
+}
+
 void sendfiledata(int sockfd,char *filename)
 {
         FILE *file;
@@ -102,14 +117,6 @@ void sendfiledata(int sockfd,char *filename)
 
 bool sendfileoversocket(int sockfd,char *filename)
 {
-   struct stat ob;
-   int filedesc,filesize,size;
-   
-   stat(filename,&ob);
-   filedesc=open(filename,O_RDONLY);
-   filesize=ob.st_size;
-  // send(sockfd,filedesc,NULL,filesize);
-
   sendfiledata(sockfd,filename);
    
    return true;
@@ -122,63 +129,20 @@ void error (const char *msg)
     exit(1);
 }
 
-int main(int argc,char *argv[])
+bool operations(int newsockfd)
 {
-     if(argc<2)
-     {
-       fprintf(stderr,"port not found");
-     }
-     int sockfd, newsockfd,portNumber,n,clientLen,size;
-     char buffer[255];
-     
-      
-     char filename[BUFSIZ];
-     
-     struct sockaddr_in serverAddr, clientAddr;
-     //socketlen_t clientLen;
-
-     sockfd=socket(AF_INET, SOCK_STREAM ,0);
-
-     if(sockfd<0)
-     {
-        error("opening socket");
-     }
-   
-     bzero((char *) & serverAddr , sizeof(serverAddr));
-     portNumber = atoi(argv[1]);
-
-     serverAddr.sin_family= AF_INET;
-     serverAddr.sin_addr.s_addr = INADDR_ANY;
-     serverAddr.sin_port = htons(portNumber);
-
-     if(bind(sockfd , (struct sockaddr *) &serverAddr , sizeof(serverAddr))<0)
-     {
-      error("binding failed");
-     }
-
-     listen (sockfd,5);
-     clientLen= sizeof(clientAddr);
-
-     newsockfd= accept(sockfd , (struct sockaddr*) &clientAddr, &clientLen);
-
-     if(newsockfd<0)
-     {
-       error("didn't accept");
-     }
-  
-     while(1)
-     {
-     
+             char filename[BUFSIZ];     
              char serverresponse[BUFSIZ];
              char clientrequest[BUFSIZ];
              char command[10];
+             int size;
              memset( serverresponse, '\0', sizeof( serverresponse ));
              memset( clientrequest, '\0', sizeof( clientrequest ));
       		  
-               printf("at first our command%s\n",clientrequest);
+            printf("at first our command%s\n",clientrequest);
 	      recv(newsockfd,clientrequest,BUFSIZ,0);
 	       // recv(newsockfd,clientrequest,strlen(clientrequest),0);
-	        clientrequest[strlen(clientrequest)]='\0';
+	       clientrequest[strlen(clientrequest)]='\0';
 	       printf("now our client is %s\n",clientrequest);
 	       printf(" %lu\n",strlen(clientrequest));
 	       printf("at first our server is %s\n",serverresponse);
@@ -187,7 +151,7 @@ int main(int argc,char *argv[])
 	      	       
 	       if(strcmp(command,"Get") == 0)   
 	       {
-	                                          memset( filename, '\0', sizeof( filename ));
+	             memset( filename, '\0', sizeof( filename ));
 		       strcpy(filename,getfilenamefromrequest(clientrequest));
 		       //recv(newsockfd,filename,BUFSIZ,0);
 		       printf("%s\n",filename);
@@ -199,7 +163,17 @@ int main(int argc,char *argv[])
 			  	printf("response msg is %s\n",serverresponse);
 			  	write(newsockfd,serverresponse, strlen(serverresponse));
 			  	printf("starting sending\n");
-			  	sendfileoversocket(newsockfd,filename);
+			  	char *f1=".txt";
+                        char *f2=".";
+			  	if(strstr(filename,f1) || !(strstr(filename,f2)))
+				{
+                              sendtxtfile(newsockfd,filename);
+			      }
+			      else
+			      {
+			         	sendfileoversocket(newsockfd,filename);
+			      }
+
 		       
 		       }
 		       else
@@ -207,6 +181,10 @@ int main(int argc,char *argv[])
 			 	strcpy(serverresponse,"NO");
 			 	write(newsockfd,serverresponse,strlen(serverresponse));
 		       }
+		       memset( serverresponse, '\0', sizeof( serverresponse ));
+                   memset( clientrequest, '\0', sizeof( clientrequest ));
+		       
+		       return false;
 	       }
 	       else if(strcmp(clientrequest,"pwd") == 0)
 	       {         
@@ -219,6 +197,10 @@ int main(int argc,char *argv[])
 			  printf("%lu\n",strlen(serverresponse));
 		        memset( pwd, '\0', sizeof( pwd ));
 		        memset( serverresponse, '\0', sizeof( serverresponse ));
+		         memset( serverresponse, '\0', sizeof( serverresponse ));
+                   memset( clientrequest, '\0', sizeof( clientrequest ));
+		      
+		        return false;
 
 	       }
 	       else if(strcmp(clientrequest,"ls") == 0)
@@ -246,6 +228,10 @@ int main(int argc,char *argv[])
 	          printf("the file has been sent\n");
 	          remove("t.txt");
 	         // return 0;
+	          memset( serverresponse, '\0', sizeof( serverresponse ));
+                   memset( clientrequest, '\0', sizeof( clientrequest ));
+		      
+	         return false;
 	       }
 
              else if(strcmp(clientrequest,"cd") == 0)
@@ -263,6 +249,10 @@ int main(int argc,char *argv[])
 		  	 send(newsockfd, &c, sizeof(int), 0);
 		  	 path[0]='0';
 		  	 memset( path, '\0', sizeof( path ));
+		  	  memset( serverresponse, '\0', sizeof( serverresponse ));
+                   memset( clientrequest, '\0', sizeof( clientrequest ));
+		      
+		  	 return false;
              }
         
                 
@@ -329,15 +319,73 @@ int main(int argc,char *argv[])
 			                  //memset( requestmsg, '\0', sizeof( requestmsg ));
 			  
 			  printf("file has been saved");
+			   memset( serverresponse, '\0', sizeof( serverresponse ));
+                   memset( clientrequest, '\0', sizeof( clientrequest ));
+		      
+			  return false;
 	       }
         
 	       else  if(strcmp(clientrequest,"quit") == 0 || strcmp(clientrequest," ") == 0) 
 	       {
-				break;
+                              return true;
 	       }  
-		printf("transfer closed in loop\n");
-                              memset( serverresponse, '\0', sizeof( serverresponse ));
-                              memset( clientrequest, '\0', sizeof( clientrequest ));
+
+}
+
+
+
+int main(int argc,char *argv[])
+{
+     if(argc<2)
+     {
+       fprintf(stderr,"port not found");
+     }
+     int sockfd, newsockfd,portNumber,n,clientLen;
+     char buffer[255];
+     
+           
+     struct sockaddr_in serverAddr, clientAddr;
+     //socketlen_t clientLen;
+
+     sockfd=socket(AF_INET, SOCK_STREAM ,0);
+
+     if(sockfd<0)
+     {
+        error("opening socket");
+     }
+   
+     bzero((char *) & serverAddr , sizeof(serverAddr));
+     portNumber = atoi(argv[1]);
+
+     serverAddr.sin_family= AF_INET;
+     serverAddr.sin_addr.s_addr = INADDR_ANY;
+     serverAddr.sin_port = htons(portNumber);
+
+     if(bind(sockfd , (struct sockaddr *) &serverAddr , sizeof(serverAddr))<0)
+     {
+      error("binding failed");
+     }
+
+     listen (sockfd,5);
+     clientLen= sizeof(clientAddr);
+
+     newsockfd= accept(sockfd , (struct sockaddr*) &clientAddr, &clientLen);
+
+     if(newsockfd<0)
+     {
+       error("didn't accept");
+     }
+  
+     while(1)
+     {
+              bool stop=false;
+              stop=operations(newsockfd);
+              if(stop==true)
+              {
+                break;
+              }
+              printf("transfer closed in loop\n");
+                             
      }
   
   
@@ -360,3 +408,12 @@ return 0;
 		  recv(newsockfd,d,putfilesize,0);
 		  write(putfiledesc,d,putfilesize);
 		  close(putfiledesc);*/
+		  
+//initial codes for sending files
+ /*struct stat ob;
+   int filedesc,filesize,size;
+   
+   stat(filename,&ob);
+   filedesc=open(filename,O_RDONLY);
+   filesize=ob.st_size;*/
+  // send(sockfd,filedesc,NULL,filesize);

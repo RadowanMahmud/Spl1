@@ -15,6 +15,17 @@
 
 //#define Filename "a.jpg"
 
+void recvtxtfile(int sockfd,char *Filename)
+{
+       int filedesc,filesize,size;
+       char *data;
+       recv(sockfd,&filesize,sizeof(int),0);
+	 data = malloc(filesize);
+	 filedesc=open(Filename, O_CREAT | O_EXCL | O_WRONLY ,0666);
+	 recv(sockfd,data,filesize,0);
+       write(filedesc,data,filesize);
+}
+
 void putfiledata(int sockfd,char *filename)
 {
         FILE *file;
@@ -205,55 +216,66 @@ int main(int argc,char *argv[])
 		      if(strcmp(replymsg,"OK") == 0)
 		      {
 				printf("ok");
-				recv(sockfd,&filesize,sizeof(unsigned long),0);
-				char *buffer=(char *)malloc(filesize);
-				//filedesc=open(Filename, O_CREAT | O_EXCL | O_WRONLY ,0666);
-				FILE *getfile;
-				getfile=fopen(Filename,"ab+");
-
 				
-				////////////////////////////
-				 int loop=filesize/100;
-                         int remainfile=filesize%100;
-                         
-				 int i=0;
-        			 char chunk[100];
-        			 for(int j=0;j<loop;j++)
-        			 {
-           				recv(sockfd,chunk,100,0);
-            			int k=0;
-            			while (i < filesize && k<100)
-            			{
-            				buffer[i]=chunk[k];
-            				i++;
-            				k++;
-
-           				}
-        			 }
-       			 if(remainfile>0)
-       			 {
-                     		recv(sockfd,chunk,remainfile,0);
-           				int k=0;
-           				while (i < filesize && k<remainfile)
-            			{
-            				buffer[i]=chunk[k];
-           					i++;
-           					k++;
-            			}
-        			 }
-				/////////////////////////////
-				int s=0;
-				while (s < filesize)
+				char *f1=".txt";
+                        char *f2=".";
+			  	if(strstr(Filename,f1) || !(strstr(Filename,f2)))
 				{
-				     printf("%02X ",(buffer[s]));
-				     s++;
-				     if( ! (s % 16) )
-				     {
-				     		printf( "\n" );
-				     }
-				 }
-				fwrite(buffer,1,filesize,getfile);
-				//close(filedesc);
+                              recvtxtfile(sockfd,Filename);
+			      }
+			      else
+			      {
+			            recv(sockfd,&filesize,sizeof(unsigned long),0);
+					char *buffer=(char *)malloc(filesize);
+					//filedesc=open(Filename, O_CREAT | O_EXCL | O_WRONLY ,0666);
+					FILE *getfile;
+					getfile=fopen(Filename,"ab+");
+
+					
+					////////////////////////////
+					 int loop=filesize/100;
+		                   int remainfile=filesize%100;
+		                   
+					 int i=0;
+		  			 char chunk[100];
+		  			 for(int j=0;j<loop;j++)
+		  			 {
+		     				recv(sockfd,chunk,100,0);
+		      			int k=0;
+		      			while (i < filesize && k<100)
+		      			{
+		      				buffer[i]=chunk[k];
+		      				i++;
+		      				k++;
+
+		     				}
+		  			 }
+		 			 if(remainfile>0)
+		 			 {
+		               		recv(sockfd,chunk,remainfile,0);
+		     				int k=0;
+		     				while (i < filesize && k<remainfile)
+		      			{
+		      				buffer[i]=chunk[k];
+		     					i++;
+		     					k++;
+		      			}
+		  			 }
+					/////////////////////////////
+					int s=0;
+					while (s < filesize)
+					{
+					     printf("%02X ",(buffer[s]));
+					     s++;
+					     if( ! (s % 16) )
+					     {
+					     		printf( "\n" );
+					     }
+					 }
+					fwrite(buffer,1,filesize,getfile);
+					//close(filedesc);
+					
+			      }
 				//return 0;
 		      }
 		      else
